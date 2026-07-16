@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart - GlowNature</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+<h2>🌿 GlowNature</h2>
+<button class="menu-toggle" onclick="toggleMenu()">☰</button>
+<ul id="navMenu">
+<li><a href="index.html">Home</a></li>
+<li><a href="products.html">Products</a></li>
+<li><a href="blog.html">Blog</a></li>
+<li><a href="contact.html">Contact</a></li>
+<li><a href="cart.html" class="active">Cart <span class="cart-badge" id="cartBadge"></span></a></li>
+{% if session.get('username') %}
+<li><a href="orders.html">Orders</a></li>
+<li class="user-menu-container">
+  <a href="javascript:void(0)" class="user-name-btn" id="userMenuBtn" 
+     data-username="{{ session['username'] }}" 
+     data-email="{{ session['email'] }}" 
+     data-joined="{{ session.get('created_at', 'N/A') }}">{{ session['username'] }} ▾</a>
+  <div class="user-dropdown-menu" id="userDropdownMenu">
+    <button type="button" id="profileBtn">Profile</button>
+    <a href="/logout" class="dropdown-logout-btn">Logout</a>
+  </div>
+</li>
+{% else %}
+<li><a href="login.html">Login</a></li>
+{% endif %}
+</ul>
+</nav>
+
+<section class="cart-section">
+<h2>Your Cart</h2>
+
+<div class="cart-empty" id="cartEmpty">
+<p>Your cart is empty.</p>
+<a href="products.html" class="btn">Browse Products</a>
+</div>
+
+<div class="cart-container" id="cartContainer" style="display:none;">
+<ul id="cartItems" class="cart-list"></ul>
+<div class="cart-total">
+<h3>Total: ₹<span id="cartTotal">0</span></h3>
+</div>
+<div class="cart-actions">
+<button class="btn btn-danger" onclick="clearCart()">Clear Cart</button>
+<button class="btn btn-checkout" onclick="checkout()">Buy Now</button>
+</div>
+</div>
+</section>
+
+<!-- Cart Preview Modal -->
+<div class="modal-overlay" id="cartPreviewModal" onclick="closeCartModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeCartModalDirect()">&times;</button>
+    <div class="modal-body">
+      <div class="modal-img-wrap">
+        <img id="cartModalImg" src="" alt="Product">
+      </div>
+      <div class="modal-info">
+        <span class="modal-category" id="cartModalCategory"></span>
+        <h2 id="cartModalName"></h2>
+        <p class="modal-desc" id="cartModalDesc"></p>
+        <div class="modal-features" id="cartModalFeatures"></div>
+        <div class="modal-price-row">
+          <span class="modal-price" id="cartModalUnitPrice"></span>
+          <span class="modal-price-label">per unit</span>
+        </div>
+        <div class="modal-qty">
+          <button onclick="changeCartQty(-1)">−</button>
+          <span id="cartModalQty">1</span>
+          <button onclick="changeCartQty(1)">+</button>
+        </div>
+        <div class="cart-modal-total">
+          Total: <strong id="cartModalTotal"></strong>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-modal-cart" onclick="updateCartFromModal()">Update Cart</button>
+          <button class="btn-modal-buy" onclick="buyFromCartModal()">Buy Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Checkout Form Modal -->
+<div class="modal-overlay" id="checkoutModal" onclick="closeCheckoutModal(event)">
+  <div class="checkout-box">
+    <button class="modal-close" onclick="closeCheckoutDirect()">&times;</button>
+    <h2 class="checkout-title">🛒 Complete Your Order</h2>
+    <div class="checkout-summary" id="checkoutSummary"></div>
+    <form id="checkoutForm" onsubmit="submitOrder(event)">
+      <div class="checkout-field">
+        <label for="buyerName">Full Name *</label>
+        <input type="text" id="buyerName" placeholder="Enter your full name" required>
+      </div>
+      <div class="checkout-field">
+        <label for="buyerPhone">Phone Number *</label>
+        <input type="tel" id="buyerPhone" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+      </div>
+      <div class="checkout-field">
+        <label for="buyerEmail">Email *</label>
+        <input type="email" id="buyerEmail" placeholder="your@email.com" required>
+      </div>
+      <div class="checkout-field">
+        <label for="buyerAddress">Delivery Address *</label>
+        <textarea id="buyerAddress" rows="3" placeholder="House No, Street, Landmark" required></textarea>
+      </div>
+      <div class="checkout-row">
+        <div class="checkout-field">
+          <label for="buyerCity">City *</label>
+          <input type="text" id="buyerCity" placeholder="City" required>
+        </div>
+        <div class="checkout-field">
+          <label for="buyerPincode">Pincode *</label>
+          <input type="text" id="buyerPincode" placeholder="6-digit pincode" pattern="[0-9]{6}" required>
+        </div>
+      </div>
+      <div class="checkout-field">
+        <label for="buyerPayment">Payment Method *</label>
+        <select id="buyerPayment" required>
+          <option value="">Select payment method</option>
+          <option value="COD">Cash on Delivery</option>
+          <option value="UPI">UPI</option>
+          <option value="Card">Credit / Debit Card</option>
+          <option value="NetBanking">Net Banking</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-place-order">Place Order</button>
+    </form>
+  </div>
+</div>
+
+<!-- Order Confirmation Modal -->
+<div class="modal-overlay" id="orderConfirmModal">
+  <div class="confirm-box">
+    <div class="confirm-icon">✅</div>
+    <h2 class="confirm-title">Order Placed Successfully!</h2>
+    <p class="confirm-msg">Thank you for shopping with GlowNature</p>
+    <div class="confirm-details">
+      <div class="confirm-row">
+        <span class="confirm-label">Order ID</span>
+        <strong id="confirmOrderId"></strong>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-label">Tracking ID</span>
+        <strong id="confirmTrackingId"></strong>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-label">Estimated Delivery</span>
+        <strong id="confirmDeliveryDate"></strong>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-label">Payment</span>
+        <strong id="confirmPayment"></strong>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-label">Total Paid</span>
+        <strong id="confirmTotal" class="confirm-total"></strong>
+      </div>
+    </div>
+    <button class="btn-continue" onclick="closeConfirmation()">Continue Shopping</button>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h3>GlowNature</h3>
+      <p>Your trusted destination for 100% natural, chemical-free skincare products that nourish your skin from nature's bounty.</p>
+      <div class="footer-contact">
+        <p><span class="fc-icon">&#9906;</span> Coimbatore, Tamil Nadu, India</p>
+        <p><span class="fc-icon">&#9993;</span> <a href="mailto:nidhish781@gmail.com">nidhish781@gmail.com</a></p>
+        <p><span class="fc-icon">&#9742;</span> <a href="tel:+919751192664">+91 9751192664</a></p>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="blog.html">Blog</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="cart.html">Cart</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3>Follow Us</h3>
+      <div class="footer-socials">
+        <a href="#" title="Facebook" class="social-icon">f</a>
+        <a href="#" title="Instagram" class="social-icon">in</a>
+        <a href="#" title="Twitter" class="social-icon">X</a>
+        <a href="#" title="YouTube" class="social-icon">YT</a>
+      </div>
+      <h3 class="footer-legal-title">Legal</h3>
+      <ul>
+        <li><a href="#">Terms &amp; Conditions</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 GlowNature. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<canvas class="particles-bg" id="particlesBg"></canvas>
+<div class="mouse-trail" id="mouseTrail"></div>
+<script src="/static/js/script.js"></script>
+</body>
+</html>
