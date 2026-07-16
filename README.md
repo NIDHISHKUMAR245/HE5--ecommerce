@@ -119,7 +119,7 @@ Main tables include:
 ## Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/glownature.git
+git clone https://github.com/NIDHISHKUMAR245/HE5--ecommerce.git
 ```
 
 Move into the project folder
