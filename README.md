@@ -166,20 +166,6 @@ http://127.0.0.1:5000
 
 ---
 
-# 📸 Screens
-
-- Landing Page
-- Home Page
-- Login
-- Signup
-- Products
-- Shopping Cart
-- Orders
-- Contact Us
-- Blog
-
----
-
 # 🚀 Future Enhancements
 
 - Online Payment Gateway
