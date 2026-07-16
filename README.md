@@ -94,8 +94,8 @@ ecommerce-project-main/
 - VS Code
 - Git
 - GitHub
-- MySQL Workbench
-- XAMPP (Optional)
+- XAMPP 
+- MySQL Workbench  (Optional)
 
 ---
 
