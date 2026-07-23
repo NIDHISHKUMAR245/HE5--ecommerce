@@ -49,7 +49,7 @@ ecommerce-project-main/
 │
 ├── app.py                  # Main Flask Application
 ├── config.py               # Configuration Settings
-├── db.py                   # Database Connection
+|                  
 │
 ├── static/
 │   ├── css/
