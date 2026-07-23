@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog - GlowNature</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/blog-platform.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+<h2>🌿 GlowNature</h2>
+<button class="menu-toggle" onclick="toggleMenu()">☰</button>
+<ul id="navMenu">
+<li><a href="index.html">Home</a></li>
+<li><a href="products.html">Products</a></li>
+<li><a href="blog.html" class="active">Blog</a></li>
+<li><a href="contact.html">Contact</a></li>
+<li><a href="cart.html">Cart <span class="cart-badge" id="cartBadge"></span></a></li>
+{% if session.get('username') %}
+<li><a href="orders.html">Orders</a></li>
+<li class="user-menu-container">
+  <a href="javascript:void(0)" class="user-name-btn" id="userMenuBtn" 
+     data-username="{{ session['username'] }}" 
+     data-email="{{ session['email'] }}" 
+     data-joined="{{ session.get('created_at', 'N/A') }}">{{ session['username'] }} ▾</a>
+  <div class="user-dropdown-menu" id="userDropdownMenu">
+    <button type="button" id="profileBtn">Profile</button>
+    <a href="/logout" class="dropdown-logout-btn">Logout</a>
+  </div>
+</li>
+{% else %}
+<li><a href="login.html">Login</a></li>
+{% endif %}
+</ul>
+</nav>
+
+<!-- Blog Hero Banner -->
+<section class="blog-hero">
+  <div class="blog-hero-overlay"></div>
+  <div class="blog-hero-content">
+    <h1>GlowNature Blog</h1>
+    <p>Discover skincare tips, DIY recipes, and wellness stories from our community</p>
+    <button class="btn-create-post" onclick="openEditor()">✍ Write a Post</button>
+  </div>
+</section>
+
+<!-- Blog Controls -->
+<section class="blog-platform">
+  <div class="blog-controls">
+    <div class="blog-search-wrap">
+      <input type="text" id="blogSearch" placeholder="Search posts by title, content, or tag..." oninput="filterBlogPosts()">
+      <span class="search-icon">🔍</span>
+    </div>
+    <div class="blog-filter-row">
+      <button class="blog-filter-btn active" onclick="filterByCategory('all')">All</button>
+      <button class="blog-filter-btn" onclick="filterByCategory('Skincare')">Skincare</button>
+      <button class="blog-filter-btn" onclick="filterByCategory('DIY')">DIY</button>
+      <button class="blog-filter-btn" onclick="filterByCategory('Ingredients')">Ingredients</button>
+      <button class="blog-filter-btn" onclick="filterByCategory('Hair Care')">Hair Care</button>
+      <button class="blog-filter-btn" onclick="filterByCategory('Wellness')">Wellness</button>
+      <button class="blog-filter-btn" onclick="filterByCategory('Trending')">Trending</button>
+    </div>
+    <div class="blog-view-controls">
+      <div class="blog-sort">
+        <label for="blogSort">Sort:</label>
+        <select id="blogSort" onchange="filterBlogPosts()">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="title">Title A-Z</option>
+          <option value="popular">Most Liked</option>
+        </select>
+      </div>
+      <div class="blog-status-filter">
+        <label for="statusFilter">Show:</label>
+        <select id="statusFilter" onchange="filterBlogPosts()">
+          <option value="published">Published</option>
+          <option value="draft">My Drafts</option>
+          <option value="all">All Posts</option>
+        </select>
+      </div>
+      <span class="post-count" id="postCount">0 posts</span>
+    </div>
+  </div>
+
+  <!-- Blog Posts Grid -->
+  <div class="blog-posts-grid" id="blogPostsGrid">
+    <!-- Posts rendered by JS -->
+  </div>
+
+  <!-- Empty State -->
+  <div class="blog-empty" id="blogEmpty" style="display:none;">
+    <div class="empty-icon">📝</div>
+    <h3>No posts found</h3>
+    <p>Be the first to share your skincare journey!</p>
+    <button class="btn-create-post" onclick="openEditor()">Write Your First Post</button>
+  </div>
+</section>
+
+<!-- Blog Post Editor Modal -->
+<div class="blog-modal-overlay" id="editorModal">
+  <div class="blog-editor-box">
+    <div class="editor-header">
+      <h2 id="editorTitle">Create New Post</h2>
+      <button class="modal-close" onclick="closeEditor()">&times;</button>
+    </div>
+    <form id="blogEditorForm" onsubmit="return false;">
+      <input type="hidden" id="editPostId" value="">
+
+      <div class="editor-field">
+        <label for="postTitle">Post Title <span class="required">*</span></label>
+        <input type="text" id="postTitle" placeholder="Enter a compelling title..." maxlength="150" required>
+        <span class="char-count"><span id="titleCharCount">0</span>/150</span>
+      </div>
+
+      <div class="editor-field">
+        <label for="postCoverImage">Cover Image URL</label>
+        <input type="text" id="postCoverImage" placeholder="https://images.unsplash.com/...">
+        <div class="cover-preview" id="coverPreview"></div>
+      </div>
+
+      <div class="editor-row">
+        <div class="editor-field">
+          <label for="postCategory">Category <span class="required">*</span></label>
+          <select id="postCategory" required>
+            <option value="">Select category</option>
+            <option value="Skincare">Skincare</option>
+            <option value="DIY">DIY</option>
+            <option value="Ingredients">Ingredients</option>
+            <option value="Hair Care">Hair Care</option>
+            <option value="Wellness">Wellness</option>
+            <option value="Trending">Trending</option>
+          </select>
+        </div>
+        <div class="editor-field">
+          <label for="postAuthor">Author Name <span class="required">*</span></label>
+          <input type="text" id="postAuthor" placeholder="Your name" maxlength="50" required>
+        </div>
+      </div>
+
+      <div class="editor-field">
+        <label for="postTags">Tags <small>(comma separated)</small></label>
+        <input type="text" id="postTags" placeholder="e.g. aloe vera, moisturizer, organic">
+        <div class="tags-preview" id="tagsPreview"></div>
+      </div>
+
+      <div class="editor-field">
+        <label for="postExcerpt">Excerpt / Summary <span class="required">*</span></label>
+        <textarea id="postExcerpt" rows="2" placeholder="A brief summary of your post (shown in cards)..." maxlength="300" required></textarea>
+        <span class="char-count"><span id="excerptCharCount">0</span>/300</span>
+      </div>
+
+      <div class="editor-field">
+        <label>Post Content <span class="required">*</span></label>
+        <div class="rich-toolbar" id="richToolbar">
+          <button type="button" onclick="execCmd('bold')" title="Bold"><b>B</b></button>
+          <button type="button" onclick="execCmd('italic')" title="Italic"><i>I</i></button>
+          <button type="button" onclick="execCmd('underline')" title="Underline"><u>U</u></button>
+          <button type="button" onclick="execCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+          <span class="toolbar-divider"></span>
+          <button type="button" onclick="execCmd('formatBlock','<h2>')" title="Heading 2">H2</button>
+          <button type="button" onclick="execCmd('formatBlock','<h3>')" title="Heading 3">H3</button>
+          <button type="button" onclick="execCmd('formatBlock','<p>')" title="Paragraph">P</button>
+          <button type="button" onclick="execCmd('formatBlock','<blockquote>')" title="Blockquote">❝</button>
+          <span class="toolbar-divider"></span>
+          <button type="button" onclick="execCmd('insertUnorderedList')" title="Bullet List">• List</button>
+          <button type="button" onclick="execCmd('insertOrderedList')" title="Numbered List">1. List</button>
+          <span class="toolbar-divider"></span>
+          <button type="button" onclick="execCmd('justifyLeft')" title="Align Left">⬅</button>
+          <button type="button" onclick="execCmd('justifyCenter')" title="Align Center">⬌</button>
+          <button type="button" onclick="execCmd('justifyRight')" title="Align Right">➡</button>
+          <span class="toolbar-divider"></span>
+          <button type="button" onclick="insertLink()" title="Insert Link">🔗</button>
+          <button type="button" onclick="insertImage()" title="Insert Image">🖼</button>
+          <button type="button" onclick="execCmd('removeFormat')" title="Clear Formatting">✕</button>
+        </div>
+        <div class="rich-editor" id="postContent" contenteditable="true" placeholder="Write your blog post here..."></div>
+        <span class="word-count">Words: <span id="wordCount">0</span></span>
+      </div>
+
+      <div class="editor-actions">
+        <button type="button" class="btn-draft" onclick="saveBlogPost('draft')">💾 Save as Draft</button>
+        <button type="button" class="btn-publish" onclick="saveBlogPost('published')">🚀 Publish Post</button>
+        <button type="button" class="btn-cancel" onclick="closeEditor()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Blog Post Viewer Modal -->
+<div class="blog-modal-overlay" id="viewerModal">
+  <div class="blog-viewer-box">
+    <button class="modal-close" onclick="closeViewer()">&times;</button>
+    <div class="viewer-cover" id="viewerCover"></div>
+    <div class="viewer-content">
+      <div class="viewer-meta">
+        <span class="viewer-category" id="viewerCategory"></span>
+        <span class="viewer-status" id="viewerStatus"></span>
+      </div>
+      <h1 id="viewerTitle"></h1>
+      <div class="viewer-info">
+        <span class="viewer-author" id="viewerAuthor"></span>
+        <span class="viewer-date" id="viewerDate"></span>
+        <span class="viewer-read-time" id="viewerReadTime"></span>
+      </div>
+      <div class="viewer-tags" id="viewerTags"></div>
+      <div class="viewer-body" id="viewerBody"></div>
+      <div class="viewer-actions">
+        <button class="btn-like" id="viewerLikeBtn" onclick="toggleLike()">
+          <span id="likeIcon">♡</span> <span id="likeCount">0</span> Likes
+        </button>
+        <button class="btn-edit-post" id="viewerEditBtn" onclick="editFromViewer()">✏ Edit</button>
+        <button class="btn-delete-post" id="viewerDeleteBtn" onclick="deleteFromViewer()">🗑 Delete</button>
+        <button class="btn-share" onclick="sharePost()">📤 Share</button>
+      </div>
+
+      <!-- Comments Section -->
+      <div class="comments-section">
+        <h3>Comments (<span id="commentCount">0</span>)</h3>
+        <form class="comment-form" onsubmit="return false;">
+          <div class="comment-form-row">
+            <input type="text" id="commentAuthor" placeholder="Your name" maxlength="50" required>
+            <button type="button" class="btn-comment" onclick="addComment()">Post Comment</button>
+          </div>
+          <textarea id="commentText" rows="3" placeholder="Share your thoughts..." maxlength="1000" required></textarea>
+        </form>
+        <div class="comments-list" id="commentsList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="blog-modal-overlay" id="deleteModal">
+  <div class="delete-confirm-box">
+    <div class="delete-icon">⚠️</div>
+    <h3>Delete this post?</h3>
+    <p>This action cannot be undone. The post and all its comments will be permanently removed.</p>
+    <div class="delete-actions">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm-delete" onclick="confirmDeletePost()">Delete Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast for blog -->
+<div class="blog-toast" id="blogToast"></div>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h3>GlowNature</h3>
+      <p>Your trusted destination for 100% natural, chemical-free skincare products that nourish your skin from nature's bounty.</p>
+      <div class="footer-contact">
+        <p><span class="fc-icon">&#9906;</span> Coimbatore, Tamil Nadu, India</p>
+        <p><span class="fc-icon">&#9993;</span> <a href="mailto:nidhish781@gmail.com">nidhish781@gmail.com</a></p>
+        <p><span class="fc-icon">&#9742;</span> <a href="tel:+919751192664">+91 9751192664</a></p>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="blog.html">Blog</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="cart.html">Cart</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3>Follow Us</h3>
+      <div class="footer-socials">
+        <a href="#" title="Facebook" class="social-icon">f</a>
+        <a href="#" title="Instagram" class="social-icon">in</a>
+        <a href="#" title="Twitter" class="social-icon">X</a>
+        <a href="#" title="YouTube" class="social-icon">YT</a>
+      </div>
+      <h3 class="footer-legal-title">Legal</h3>
+      <ul>
+        <li><a href="#">Terms &amp; Conditions</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 GlowNature. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<canvas class="particles-bg" id="particlesBg"></canvas>
+<div class="mouse-trail" id="mouseTrail"></div>
+<script src="/static/js/script.js"></script>
+<script src="/static/js/blog-platform.js"></script>
+</body>
+</html>

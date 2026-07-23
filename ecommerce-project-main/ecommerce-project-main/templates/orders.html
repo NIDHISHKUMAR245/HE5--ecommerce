@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Orders - GlowNature</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+<h2>🌿 GlowNature</h2>
+<button class="menu-toggle" onclick="toggleMenu()">☰</button>
+<ul id="navMenu">
+<li><a href="index.html">Home</a></li>
+<li><a href="products.html">Products</a></li>
+<li><a href="blog.html">Blog</a></li>
+<li><a href="contact.html">Contact</a></li>
+<li><a href="cart.html">Cart <span class="cart-badge" id="cartBadge"></span></a></li>
+{% if session.get('username') %}
+<li><a href="orders.html" class="active">Orders</a></li>
+<li class="user-menu-container">
+  <a href="javascript:void(0)" class="user-name-btn" id="userMenuBtn" 
+     data-username="{{ session['username'] }}" 
+     data-email="{{ session['email'] }}" 
+     data-joined="{{ session.get('created_at', 'N/A') }}">{{ session['username'] }} ▾</a>
+  <div class="user-dropdown-menu" id="userDropdownMenu">
+    <button type="button" id="profileBtn">Profile</button>
+    <a href="/logout" class="dropdown-logout-btn">Logout</a>
+  </div>
+</li>
+{% else %}
+<li><a href="login.html">Login</a></li>
+{% endif %}
+</ul>
+</nav>
+
+<section class="orders-section">
+  <h2 class="orders-title">My Orders</h2>
+  <p class="orders-subtitle">Track and view your recent skincare purchases</p>
+
+  {% if orders %}
+    <div class="orders-list">
+      {% for order in orders %}
+        <div class="order-card">
+          <!-- Order Header -->
+          <div class="order-header">
+            <div class="order-header-item">
+              <h4>Order Placed</h4>
+              <p>{{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at.strftime else order.created_at }}</p>
+            </div>
+            <div class="order-header-item">
+              <h4>Total</h4>
+              <p class="order-total">₹{{ "%.2f"|format(order.total_amount) }}</p>
+            </div>
+            <div class="order-header-item">
+              <h4>Order ID</h4>
+              <p>{{ order.order_id }}</p>
+            </div>
+            <div class="order-header-item">
+              <h4>Tracking ID</h4>
+              <p>{{ order.tracking_id }}</p>
+            </div>
+          </div>
+
+          <!-- Order Body -->
+          <div class="order-body">
+            <div class="order-details-grid">
+              <!-- Shipping Details -->
+              <div class="details-block">
+                <h5>Shipping Address</h5>
+                <p>
+                  <strong>{{ order.buyer_name }}</strong><br>
+                  {{ order.buyer_address }}<br>
+                  {{ order.buyer_city }} - {{ order.buyer_pincode }}<br>
+                  Phone: {{ order.buyer_phone }}<br>
+                  Email: {{ order.buyer_email }}
+                </p>
+              </div>
+
+              <!-- Payment Details -->
+              <div class="details-block">
+                <h5>Payment Info</h5>
+                <p>
+                  Payment Method: <strong>{{ order.payment_method | upper }}</strong><br>
+                  Status: <strong style="color: #1a3c1a;">Paid &amp; Processing</strong>
+                </p>
+              </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="order-items-table-wrapper">
+              <h5>Items Ordered</h5>
+              <table class="order-items-table">
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th style="text-align: right;">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in order['items'] %}
+                    <tr>
+                      <td>{{ item.product_name }}</td>
+                      <td>₹{{ "%.2f"|format(item.price) }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td style="text-align: right; font-weight: 600; color: #1a3c1a;">
+                        ₹{{ "%.2f"|format(item.price * item.quantity) }}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="order-empty-state">
+      <h3>No Orders Yet</h3>
+      <p>Nourish your skin with our range of organic skincare products.</p>
+      <a href="products.html" class="btn">Shop Now</a>
+    </div>
+  {% endif %}
+</section>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h3>GlowNature</h3>
+      <p>Your trusted destination for 100% natural, chemical-free skincare products that nourish your skin from nature's bounty.</p>
+      <div class="footer-contact">
+        <p><span class="fc-icon">&#9906;</span> Coimbatore, Tamil Nadu, India</p>
+        <p><span class="fc-icon">&#9993;</span> <a href="mailto:nidhish781@gmail.com">nidhish781@gmail.com</a></p>
+        <p><span class="fc-icon">&#9742;</span> <a href="tel:+919751192664">+91 9751192664</a></p>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="blog.html">Blog</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="cart.html">Cart</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3>Follow Us</h3>
+      <div class="footer-socials">
+        <a href="#" title="Facebook" class="social-icon">f</a>
+        <a href="#" title="Instagram" class="social-icon">in</a>
+        <a href="#" title="Twitter" class="social-icon">X</a>
+        <a href="#" title="YouTube" class="social-icon">YT</a>
+      </div>
+      <h3 class="footer-legal-title">Legal</h3>
+      <ul>
+        <li><a href="#">Terms &amp; Conditions</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 GlowNature. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<canvas class="particles-bg" id="particlesBg"></canvas>
+<div class="mouse-trail" id="mouseTrail"></div>
+
+<script src="/static/js/script.js"></script>
+</body>
+</html>
